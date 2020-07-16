@@ -8,6 +8,8 @@ pub trait PIterator: Clone + Iterator {}
 pub struct PError;
 pub type PResult<O, I> = std::result::Result<(I, O), PError>;
 
+impl<'a> PIterator for std::str::Chars<'a> {}
+
 #[macro_export]
 macro_rules! parser_builder {
     ($parser_iter:ty; Iter) => {
@@ -80,6 +82,14 @@ macro_rules! parser_builder {
             parser_builder!($parser_iter; $($p1)*),
             parser_builder!($parser_iter; $($p2)*),
             parser_builder!($parser_iter; $($p3)*),
+        )
+    };
+    ($parser_iter:ty; ($($p1:tt)*) > ($($p2:tt)*) > ($($p3:tt)*) > ($($p4:tt)*)) => {
+        $crate::and::and4(
+            parser_builder!($parser_iter; $($p1)*),
+            parser_builder!($parser_iter; $($p2)*),
+            parser_builder!($parser_iter; $($p3)*),
+            parser_builder!($parser_iter; $($p4)*),
         )
     };
     ($parser_iter:ty; ($($p1:tt)*) starts with ($($p2:tt)*)) => {
@@ -193,79 +203,4 @@ macro_rules! parser {
     (
         $parser_iter:ty => $res_enum_name:ident;
     ) => {};
-}
-
-#[test]
-fn test() {
-    impl<'a> PIterator for std::str::Chars<'a> {}
-    #[derive(Debug, Clone, PartialEq)]
-    pub enum Token {
-        Plus,
-        Minus,
-        BracketOpen,
-        BracketClose,
-        ChevronLeft,
-        ChevronRight,
-        Tokens(Vec<Token>),
-    }
-
-    parser! {
-        std::str::Chars<'a> => Token;
-
-        Plus : { Iter '+' };
-        Minus : { Iter '-' };
-        BracketOpen : { Iter '[' };
-        BracketClose : { Iter ']' };
-        ChevronLeft : { Iter '>' };
-        ChevronRight : { Iter '<' };
-        Tokens: { ((Plus) | (Minus) | (BracketOpen) | (BracketClose) | (ChevronLeft) | (ChevronRight))* } map { |v| Token::Tokens(v) };
-    }
-
-    #[derive(Debug)]
-    pub enum Node {
-        Inc,
-        Dec,
-        PtrP,
-        PtrM,
-        Loop(Vec<Node>),
-        Nodes(Vec<Node>),
-    }
-
-    #[derive(Debug, Clone)]
-    pub struct Tokens<'a> {
-        v: std::slice::Iter<'a, Token>,
-    }
-    impl<'a> Tokens<'a> {
-        pub fn new(v: &'a Vec<Token>) -> Self {
-            Tokens { v: v.iter() }
-        }
-    }
-    impl<'a> Iterator for Tokens<'a> {
-        type Item = Token;
-        fn next(&mut self) -> Option<Token> {
-            self.v.next().to_owned().map(|v| v.clone())
-        }
-    }
-    impl<'a> PIterator for Tokens<'a> {}
-
-    parser! {
-        Tokens<'a> => Node;
-        Inc: { Iter Token::Plus };
-        Dec: { Iter Token::Minus };
-        PtrP: { Iter Token::ChevronRight };
-        PtrM: { Iter Token::ChevronLeft };
-        Action: { (Inc) | (Dec) | (PtrP) | (PtrM) } nomap;
-        recursive Loop: { (map (((Action) | (Loop))*) as (|v| Node::Loop(v))) surrounded by (Iter Token::BracketOpen) and (Iter Token::BracketClose) };
-        Nodes: { ((Action) | (Loop))* } map { |v| Node::Nodes(v) };
-    }
-
-    let input = "+>[+-[+>]>]".chars();
-
-    let (input, r) = Tokens()(input).unwrap();
-    println!("{:?}", r);
-    if let Token::Tokens(v) = r {
-        let input = Tokens::new(&v);
-        let (input, r) = Nodes()(input).unwrap();
-        println!("{:?}", r);
-    }
 }

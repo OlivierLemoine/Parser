@@ -32,3 +32,17 @@ where
 {
     take_while(|_| true, parser)
 }
+
+pub fn at_least_one<O, I, F>(parser: F) -> impl Fn(I) -> PResult<Vec<O>, I>
+where
+    I: PIterator,
+    F: Fn(I) -> PResult<O, I>,
+{
+    crate::transform::flatmap(take_while(|_| true, parser), |v| {
+        if v.len() > 0 {
+            Some(v)
+        } else {
+            None
+        }
+    })
+}

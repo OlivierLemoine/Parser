@@ -167,6 +167,23 @@ macro_rules! parser {
     (
         $parser_iter:ty => $res_enum_name:ident;
 
+        $enum_varient:ident : { $($rule:tt)* } flatmap {$($closure:tt)*};
+
+        $($rest:tt)*
+    ) => {
+        #[allow(non_snake_case)]
+        pub fn $enum_varient<'a>() -> impl Fn($parser_iter) -> PResult<$res_enum_name, $parser_iter>
+        {
+            $crate::transform::flatmap(parser_builder!($parser_iter; $($rule)*), $($closure)*)
+        }
+        parser!{
+            $parser_iter => $res_enum_name;
+            $($rest)*
+        }
+    };
+    (
+        $parser_iter:ty => $res_enum_name:ident;
+
         $enum_varient:ident : { $($rule:tt)* } nomap;
 
         $($rest:tt)*

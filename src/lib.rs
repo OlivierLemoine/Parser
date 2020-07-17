@@ -31,6 +31,9 @@ macro_rules! parser_builder {
     ($parser_iter:ty; $v:ident) => {
         $v()
     };
+    ($parser_iter:ty; ($($p:tt)*)) => {
+        parser_builder!($parser_iter; $($p)*)
+    };
     ($parser_iter:ty; ($($p1:tt)*) | ($($p2:tt)*)) => {
         $crate::or::or2(
             parser_builder!($parser_iter; $($p1)*),
@@ -123,8 +126,14 @@ macro_rules! parser_builder {
     ($parser_iter:ty; map ($($p:tt)*) as $($closure:tt)*) => {
         $crate::transform::map(parser_builder!($parser_iter; $($p)*), $($closure)*)
     };
+    ($parser_iter:ty; flatmap ($($p:tt)*) as $($closure:tt)*) => {
+        $crate::transform::flatmap(parser_builder!($parser_iter; $($p)*), $($closure)*)
+    };
     ($parser_iter:ty; ($($p:tt)*) *) => {
         $crate::many::many(parser_builder!($parser_iter; $($p)*))
+    };
+    ($parser_iter:ty; ($($p:tt)*) +) => {
+        $crate::many::at_least_one(parser_builder!($parser_iter; $($p)*))
     };
 }
 
@@ -150,14 +159,14 @@ macro_rules! parser {
     (
         $parser_iter:ty => $res_enum_name:ident;
 
-        $enum_varient:ident : { $($rule:tt)* } map {$($closure:tt)*};
+        nomap $enum_varient:ident : { $($rule:tt)* };
 
         $($rest:tt)*
     ) => {
         #[allow(non_snake_case)]
         pub fn $enum_varient<'a>() -> impl Fn($parser_iter) -> PResult<$res_enum_name, $parser_iter>
         {
-            $crate::transform::map(parser_builder!($parser_iter; $($rule)*), $($closure)*)
+            parser_builder!($parser_iter; $($rule)*)
         }
         parser!{
             $parser_iter => $res_enum_name;
@@ -167,29 +176,12 @@ macro_rules! parser {
     (
         $parser_iter:ty => $res_enum_name:ident;
 
-        $enum_varient:ident : { $($rule:tt)* } flatmap {$($closure:tt)*};
+        $enum_varient:ident as $as_type:ty : { $($rule:tt)* };
 
         $($rest:tt)*
     ) => {
         #[allow(non_snake_case)]
-        pub fn $enum_varient<'a>() -> impl Fn($parser_iter) -> PResult<$res_enum_name, $parser_iter>
-        {
-            $crate::transform::flatmap(parser_builder!($parser_iter; $($rule)*), $($closure)*)
-        }
-        parser!{
-            $parser_iter => $res_enum_name;
-            $($rest)*
-        }
-    };
-    (
-        $parser_iter:ty => $res_enum_name:ident;
-
-        $enum_varient:ident : { $($rule:tt)* } nomap;
-
-        $($rest:tt)*
-    ) => {
-        #[allow(non_snake_case)]
-        pub fn $enum_varient<'a>() -> impl Fn($parser_iter) -> PResult<$res_enum_name, $parser_iter>
+        pub fn $enum_varient<'a>() -> impl Fn($parser_iter) -> PResult<$as_type, $parser_iter>
         {
             parser_builder!($parser_iter; $($rule)*)
         }

@@ -21,3 +21,4 @@ impl_or! {or3; parser2: F2, parser3: F3}
 impl_or! {or4; parser2: F2, parser3: F3, parser4: F4}
 impl_or! {or5; parser2: F2, parser3: F3, parser4: F4, parser5: F5}
 impl_or! {or6; parser2: F2, parser3: F3, parser4: F4, parser5: F5, parser6: F6}
+impl_or! {or7; parser2: F2, parser3: F3, parser4: F4, parser5: F5, parser6: F6, parser7: F7}

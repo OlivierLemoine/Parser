@@ -22,3 +22,4 @@ impl_and! {and3; parser2: F2 > O2, parser3: F3 > O3}
 impl_and! {and4; parser2: F2 > O2, parser3: F3 > O3, parser4: F4 > O4}
 impl_and! {and5; parser2: F2 > O2, parser3: F3 > O3, parser4: F4 > O4, parser5: F5 > O5}
 impl_and! {and6; parser2: F2 > O2, parser3: F3 > O3, parser4: F4 > O4, parser5: F5 > O5, parser6: F6 > O6}
+impl_and! {and7; parser2: F2 > O2, parser3: F3 > O3, parser4: F4 > O4, parser5: F5 > O5, parser6: F6 > O6, parser7: F7 > O7}

@@ -1,4 +1,5 @@
 pub mod and;
+pub mod debug;
 pub mod many;
 pub mod or;
 pub mod transform;
@@ -74,6 +75,17 @@ macro_rules! parser_builder {
             parser_builder!($parser_iter; $($p6)*),
         )
     };
+    ($parser_iter:ty; ($($p1:tt)*) | ($($p2:tt)*) | ($($p3:tt)*) | ($($p4:tt)*) | ($($p5:tt)*) | ($($p6:tt)*) | ($($p7:tt)*)) => {
+        $crate::or::or7(
+            parser_builder!($parser_iter; $($p1)*),
+            parser_builder!($parser_iter; $($p2)*),
+            parser_builder!($parser_iter; $($p3)*),
+            parser_builder!($parser_iter; $($p4)*),
+            parser_builder!($parser_iter; $($p5)*),
+            parser_builder!($parser_iter; $($p6)*),
+            parser_builder!($parser_iter; $($p7)*),
+        )
+    };
     ($parser_iter:ty; ($($p1:tt)*) > ($($p2:tt)*)) => {
         $crate::and::and2(
             parser_builder!($parser_iter; $($p1)*),
@@ -93,6 +105,36 @@ macro_rules! parser_builder {
             parser_builder!($parser_iter; $($p2)*),
             parser_builder!($parser_iter; $($p3)*),
             parser_builder!($parser_iter; $($p4)*),
+        )
+    };
+    ($parser_iter:ty; ($($p1:tt)*) > ($($p2:tt)*) > ($($p3:tt)*) > ($($p4:tt)*) > ($($p5:tt)*)) => {
+        $crate::and::and5(
+            parser_builder!($parser_iter; $($p1)*),
+            parser_builder!($parser_iter; $($p2)*),
+            parser_builder!($parser_iter; $($p3)*),
+            parser_builder!($parser_iter; $($p4)*),
+            parser_builder!($parser_iter; $($p5)*),
+        )
+    };
+    ($parser_iter:ty; ($($p1:tt)*) > ($($p2:tt)*) > ($($p3:tt)*) > ($($p4:tt)*) > ($($p5:tt)*) > ($($p6:tt)*)) => {
+        $crate::and::and6(
+            parser_builder!($parser_iter; $($p1)*),
+            parser_builder!($parser_iter; $($p2)*),
+            parser_builder!($parser_iter; $($p3)*),
+            parser_builder!($parser_iter; $($p4)*),
+            parser_builder!($parser_iter; $($p5)*),
+            parser_builder!($parser_iter; $($p6)*),
+        )
+    };
+    ($parser_iter:ty; ($($p1:tt)*) > ($($p2:tt)*) > ($($p3:tt)*) > ($($p4:tt)*) > ($($p5:tt)*) > ($($p6:tt)*) > ($($p7:tt)*)) => {
+        $crate::and::and7(
+            parser_builder!($parser_iter; $($p1)*),
+            parser_builder!($parser_iter; $($p2)*),
+            parser_builder!($parser_iter; $($p3)*),
+            parser_builder!($parser_iter; $($p4)*),
+            parser_builder!($parser_iter; $($p5)*),
+            parser_builder!($parser_iter; $($p6)*),
+            parser_builder!($parser_iter; $($p7)*),
         )
     };
     ($parser_iter:ty; ($($p1:tt)*) starts with ($($p2:tt)*)) => {
@@ -134,6 +176,9 @@ macro_rules! parser_builder {
     };
     ($parser_iter:ty; ($($p:tt)*) +) => {
         $crate::many::at_least_one(parser_builder!($parser_iter; $($p)*))
+    };
+    ($parser_iter:ty; debug ($($p:tt)*)) => {
+        $crate::debug::debug(parser_builder!($parser_iter; $($p)*))
     };
 }
 

@@ -1,12 +1,20 @@
 pub mod and;
 pub mod debug;
 pub mod many;
+pub mod option;
 pub mod or;
 pub mod transform;
 
 pub trait PIterator: Clone + Iterator {}
 #[derive(Debug)]
 pub struct PError;
+impl std::fmt::Display for PError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Parse error")
+    }
+}
+impl std::error::Error for PError {}
+
 pub type PResult<O, I> = std::result::Result<(I, O), PError>;
 
 impl<'a> PIterator for std::str::Chars<'a> {}
@@ -196,6 +204,9 @@ macro_rules! parser_builder {
     ($parser_iter:ty; flatmap ($($p:tt)*) as $($closure:tt)*) => {
         $crate::transform::flatmap(parser_builder!($parser_iter; $($p)*), $($closure)*)
     };
+    ($parser_iter:ty; ($($p:tt)*) ?) => {
+        $crate::option::option(parser_builder!($parser_iter; $($p)*))
+    };
     ($parser_iter:ty; ($($p:tt)*) *) => {
         $crate::many::many(parser_builder!($parser_iter; $($p)*))
     };
@@ -204,6 +215,9 @@ macro_rules! parser_builder {
     };
     ($parser_iter:ty; debug ($($p:tt)*)) => {
         $crate::debug::debug(parser_builder!($parser_iter; $($p)*))
+    };
+    ($parser_iter:ty; ($($p:tt)*) while $($closure:tt)*) => {
+        $crate::many::take_while($($closure)*, parser_builder!($parser_iter; $($p)*))
     };
 }
 
